@@ -2531,18 +2531,30 @@ function buildSampleList(){
   samples.forEach(sample=>{
     const item=document.createElement('div');item.className='sample-item';
     item.innerHTML=`<div class="sample-dot" style="background:${sample.color}"></div><div class="sample-info"><div class="sample-name">${sample.name}</div><div class="sample-type">${currentBank}</div></div><div class="load-arrow">→${selectedPad+1}</div>`;
-    // left click: load
+    // tap: load / long press: preview
+    let holdTimer=null;
+    let didHold=false;
+    item.addEventListener('touchstart',e=>{
+      didHold=false;
+      holdTimer=setTimeout(()=>{didHold=true;doPreview(sample,item);},400);
+    },{passive:true});
+    item.addEventListener('touchend',e=>{
+      clearTimeout(holdTimer);
+      if(!didHold){
+        loadToPad(sample,selectedPad);
+        setScreen(sample.name.substring(0,10),'LOADED ✓');
+        item.classList.add('just-loaded');
+        setTimeout(()=>item.classList.remove('just-loaded'),500);
+      }
+    });
+    item.addEventListener('touchmove',()=>clearTimeout(holdTimer));
+    // mouse click (desktop)
     item.addEventListener('click',()=>{
       loadToPad(sample,selectedPad);
       setScreen(sample.name.substring(0,10),'LOADED ✓');
       item.classList.add('just-loaded');
       setTimeout(()=>item.classList.remove('just-loaded'),500);
     });
-    // right click / long press: preview
-    let holdTimer=null;
-    item.addEventListener('touchstart',e=>{e.preventDefault();holdTimer=setTimeout(()=>doPreview(sample,item),400);},{passive:false});
-    item.addEventListener('touchend',()=>clearTimeout(holdTimer));
-    item.addEventListener('touchmove',()=>clearTimeout(holdTimer));
     item.addEventListener('contextmenu',e=>{e.preventDefault();doPreview(sample,item);});
     el.appendChild(item);
   });
